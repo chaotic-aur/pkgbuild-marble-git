@@ -1,106 +1,118 @@
+# Merged with official ABS marble PKGBUILD by João, 2024/03/30 (all respective contributors apply herein)
+# Maintainer: João Figueiredo & chaotic-aur <islandc0der@chaotic.cx>
 # Contributor: Gustavo Alvarez <sl1pkn07@gmail.com>
-# Maintainer: Stefan Husmann <stefan-husmann@t-online.de>
+# Contributor: Stefan Husmann <stefan-husmann@t-online.de>
 
 pkgbase=marble-git
-pkgname=('marble-git'
-         'libastro-git'
-         'marble-data-git'
-	 'marble-common-git')
-pkgver=20.12.3.454.g2edf1673f
+pkgname=(marble-git
+         marble-common-git
+         marble-maps-git
+         marble-qt-git)
+pkgver=24.04.70_r13851.gab23c211a
 pkgrel=1
-pkgdesc="Desktop Globe. (GIT version)"
-arch=('i686' 'x86_64')
-url='https://www.kde.org/applications/system/marble'
-license=('GPL')
-makedepends=('git' 'quazip' 'shapelib' 'libwlocate' 'phonon-qt5'
-	     'extra-cmake-modules' 'krunner' 'python' 'qt5-webengine'
-	     'qt5-tools' 'qt5-serialport' 'kparts' 'knewstuff' 'opencv'
-	     'hicolor-icon-theme')
-source=('git+https://invent.kde.org/education/marble.git')
+pkgdesc='Desktop Globe'
+arch=($CARCH)
+url="https://github.com/KDE/${pkgbase%-git}"
+license=(GPL-2.0-or-later)
+makedepends=(git extra-cmake-modules-git gpsd kdoctools5 knewstuff5 kparts5 krunner5 libwlocate phonon-qt5-git protobuf qt5-serialport qt5-tools qt5-webengine shapelib kirigami2-git)
+conflicts=(${pkgbase%-git})
+provides=(${pkgbase%-git})
+source=("git+$url.git")
 sha256sums=('SKIP')
 
 pkgver() {
-  cd marble
-  git describe --tags | cut -c2- |tr - .
+  cd ${pkgbase%-git}
+  _major_ver="$(grep -m1 'set *(RELEASE_SERVICE_VERSION_MAJOR' CMakeLists.txt | cut -d '"' -f2)"
+  _minor_ver="$(grep -m1 'set *(RELEASE_SERVICE_VERSION_MINOR' CMakeLists.txt | cut -d '"' -f2)"
+  _micro_ver="$(grep -m1 'set *(RELEASE_SERVICE_VERSION_MICRO' CMakeLists.txt | cut -d '"' -f2)"
+  echo "${_major_ver}.${_minor_ver}.${_micro_ver}_r$(git rev-list --count HEAD).g$(git rev-parse --short HEAD)"
 }
-
-prepare() {
-   mkdir -p build
-
-   # only build the KDE app
-   sed -e '/mobile/d' \
-       -e '/kde/d'  \
-       -e '/Quick/d' \
-       -e '/touch/d' \
-       -i marble/src/apps/CMakeLists.txt
- }
 
 build() {
-  cd build
-  LANG=C
-  cmake ../marble \
-    -DCMAKE_BUILD_TYPE=Release \
+  cmake -B build -S ${pkgbase%-git} \
     -DCMAKE_INSTALL_PREFIX=/usr \
-    -DCMAKE_INSTALL_LIBDIR=lib \
+    -DCMAKE_INSTALL_SYSCONFDIR=/etc \
+    -DCMAKE_CXX_STANDARD=17 \
     -DQT_PLUGINS_DIR=lib/qt/plugins \
     -DBUILD_TESTING=OFF \
-    -DCMAKE_CXX_STANDARD=17 \
+    -DBUILD_TOUCH=ON \
     -DBUILD_MARBLE_EXAMPLES=OFF \
-    -DBUILD_MARBLE_TOOLS=ON \
-    -DBUILD_MARBLE_TESTS=ON \
+    -DBUILD_MARBLE_TESTS=OFF \
     -DMOBILE=OFF
-  make
-}
-
-package_libastro-git() {
-  pkgdesc='Marble astronomy library'
-  depends=('gcc-libs')
-  conflicts=('kdeedu-marble<15.07'
- 'marble-qt'
- 'libastro'
- )
-  provides=('libastro')
-
-  make -C build/src/lib/astro DESTDIR="${pkgdir}" install
-}
-
-package_marble-git() {
-  depends=('marble-common-git' 'gpsd' 'qt5-serialport' 'krunner' 'qt5-webengine'
-	   'protobuf' 'knewstuff' 'kparts' 'shapelib' 'libwlocate' 'phonon-qt5'
-	   'qt5-location' 'qt5-webchannel' 'gcc-libs')
-  conflicts=('kdeedu-marble<15.04.3-3' 'marble-qt' 'marble')
-  provides=('marble')
-  groups=('kde-applications' 'kdeedu')
-
-  make -C build DESTDIR="${pkgdir}" install
-
-  # provided by libastro-git
-  rm -fr "${pkgdir}/usr/include/astro"
-  rm -fr "${pkgdir}/usr/lib/"libastro.*
-  rm -fr "${pkgdir}/usr/lib/cmake/Astro"
-
-  # provided by marble-data-git
-  rm -fr "${pkgdir}/usr/share/"{icons,mime,marble}
-}
-
-package_marble-data-git() {
-  pkgdesc='Data for Marble'
-  arch=('any')
-  depends=('hicolor-icon-theme')
-  conflicts=('kdeedu-marble<15.07'
- 'marble<15.07.80-3'
- 'marble-qt'
- 'marble-data'
- )
-  provides=('marble-data')
-
-  make -C build/data DESTDIR="${pkgdir}" install
+  cmake --build build
 }
 
 package_marble-common-git() {
-  pkgdesc="metapackage providing 'marble-common'-dependency"
-  arch=('any')
-  depends=('libastro-git' 'marble-git' 'marble-data-git')
-  conflicts=("marble-common")
-  provides=("marble-common=${pkgver}")
+  pkgdesc='Common libraries and plugins for Marble'
+  depends=(gcc-libs
+           glibc
+           phonon-qt5-git
+           protobuf
+           qt5-base
+           qt5-declarative
+           qt5-location
+           qt5-svg
+           qt5-webchannel
+           qt5-webengine
+           zlib)
+  optdepends=('gpsd: GPS based geolocation'
+              'libwlocate: WLAN based geolocation'
+              'qt5-serialport: APRS plugin'
+              'shapelib: SHP plugin')
+
+  DESTDIR="$pkgdir" cmake --install build
+  rm -r "$pkgdir"/usr/share/{config.kcfg,kxmlgui5,metainfo,plasma} \
+        "$pkgdir"/usr/bin \
+        "$pkgdir"/usr/lib/qt/{qml,plugins/*.so,plugins/kf5} \
+        "$pkgdir"/usr/share/applications/{marble_geo.desktop,marble_worldwind.desktop,org.kde.marble*.desktop} \
+        "$pkgdir"/usr/share/kservices5/{plasma-*,marble_part.desktop} \
+        "$pkgdir"/usr/share/locale/*/LC_MESSAGES/*.mo
+}
+
+package_marble-qt-git() {
+  pkgdesc+=' (Qt version)'
+  depends=(gcc-libs
+           glibc
+           marble-common-git
+           qt5-base)
+
+  DESTDIR="$pkgdir" cmake --install build/src/apps/marble-qt
+}
+
+package_marble-git() {
+  depends=(gcc-libs
+           glibc
+           kconfig5
+           kconfigwidgets5
+           kcoreaddons5
+           kcrash5
+           ki18n5
+           kio5
+           kparts5
+           kwidgetsaddons5
+           kxmlgui5
+           marble-common-git
+           qt5-base
+           qt5-declarative)
+  optdepends=('krunner5: Krunner plugin')
+  groups=(kde-applications-git
+          kde-education-git)
+
+  DESTDIR="$pkgdir" cmake --install build/src/apps/marble-kde
+  DESTDIR="$pkgdir" cmake --install build/src/plasma
+  DESTDIR="$pkgdir" cmake --install build/src/plasmarunner
+  DESTDIR="$pkgdir" cmake --install build/src/thumbnailer
+  rm -r "$pkgdir"/usr/share/{icons,doc}
+}
+
+package_marble-maps-git() {
+  pkgdesc='OpenStreetMap Navigation'
+  depends=(gcc-libs
+           glibc
+           kirigami2-git
+           marble-common-git
+           qt5-base
+           qt5-declarative)
+
+  DESTDIR="$pkgdir" cmake --install build/src/apps/marble-maps
 }
