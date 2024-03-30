@@ -1,7 +1,7 @@
 pkgbase = marble-git
 	pkgdesc = Desktop Globe
 	pkgver = 24.04.70_r13851.gab23c211a
-	pkgrel = 1
+	pkgrel = 2
 	url = https://github.com/KDE/marble
 	arch = x86_64
 	license = GPL-2.0-or-later
@@ -20,8 +20,6 @@ pkgbase = marble-git
 	makedepends = qt5-webengine
 	makedepends = shapelib
 	makedepends = kirigami2-git
-	provides = marble
-	conflicts = marble
 	source = git+https://github.com/KDE/marble.git
 	sha256sums = SKIP
 
@@ -43,6 +41,8 @@ pkgname = marble-git
 	depends = qt5-base
 	depends = qt5-declarative
 	optdepends = krunner5: Krunner plugin
+	provides = marble
+	conflicts = marble
 
 pkgname = marble-common-git
 	pkgdesc = Common libraries and plugins for Marble
@@ -61,6 +61,8 @@ pkgname = marble-common-git
 	optdepends = libwlocate: WLAN based geolocation
 	optdepends = qt5-serialport: APRS plugin
 	optdepends = shapelib: SHP plugin
+	provides = marble-common
+	conflicts = marble-common
 
 pkgname = marble-maps-git
 	pkgdesc = OpenStreetMap Navigation
@@ -70,6 +72,8 @@ pkgname = marble-maps-git
 	depends = marble-common-git
 	depends = qt5-base
 	depends = qt5-declarative
+	provides = marble-maps
+	conflicts = marble-maps
 
 pkgname = marble-qt-git
 	pkgdesc = Desktop Globe (Qt version)
@@ -77,3 +81,5 @@ pkgname = marble-qt-git
 	depends = glibc
 	depends = marble-common-git
 	depends = qt5-base
+	provides = marble-qt
+	conflicts = marble-qt

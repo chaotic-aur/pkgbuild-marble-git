@@ -9,14 +9,12 @@ pkgname=(marble-git
          marble-maps-git
          marble-qt-git)
 pkgver=24.04.70_r13851.gab23c211a
-pkgrel=1
+pkgrel=2
 pkgdesc='Desktop Globe'
 arch=($CARCH)
 url="https://github.com/KDE/${pkgbase%-git}"
 license=(GPL-2.0-or-later)
 makedepends=(git extra-cmake-modules-git gpsd kdoctools5 knewstuff5 kparts5 krunner5 libwlocate phonon-qt5-git protobuf qt5-serialport qt5-tools qt5-webengine shapelib kirigami2-git)
-conflicts=(${pkgbase%-git})
-provides=(${pkgbase%-git})
 source=("git+$url.git")
 sha256sums=('SKIP')
 
@@ -44,6 +42,8 @@ build() {
 
 package_marble-common-git() {
   pkgdesc='Common libraries and plugins for Marble'
+  conflicts=(marble-common)
+  provides=(marble-common)
   depends=(gcc-libs
            glibc
            phonon-qt5-git
@@ -71,6 +71,8 @@ package_marble-common-git() {
 
 package_marble-qt-git() {
   pkgdesc+=' (Qt version)'
+  conflicts=(marble-qt)
+  provides=(marble-qt)
   depends=(gcc-libs
            glibc
            marble-common-git
@@ -94,6 +96,8 @@ package_marble-git() {
            marble-common-git
            qt5-base
            qt5-declarative)
+  conflicts=(marble)
+  provides=(marble)
   optdepends=('krunner5: Krunner plugin')
   groups=(kde-applications-git
           kde-education-git)
@@ -107,6 +111,8 @@ package_marble-git() {
 
 package_marble-maps-git() {
   pkgdesc='OpenStreetMap Navigation'
+  conflicts=(marble-maps)
+  provides=(marble-maps)
   depends=(gcc-libs
            glibc
            kirigami2-git
